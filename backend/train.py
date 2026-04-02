@@ -16,7 +16,7 @@ import numpy as np
 from sklearn.decomposition import PCA
 from typing import Dict, Any, Generator, Optional
 
-from dataset import get_dataloaders, PRIME
+from dataset import get_dataloaders, PRIME, Operation, OPERATION_LABELS
 from model import GrokTransformer
 
 
@@ -61,6 +61,7 @@ def train_generator(
     lr: float = 1e-3,
     total_steps: int = 50000,
     log_every: int = 100,
+    operation: Operation = "addition",
     d_model: int = 128,
     n_heads: int = 4,
     d_ff: int = 200,
@@ -73,6 +74,7 @@ def train_generator(
     Each yield produces a dict:
     {
         "step": int,
+        "operation": str,
         "train_loss": float,
         "train_accuracy": float,
         "test_accuracy": float,
@@ -87,6 +89,8 @@ def train_generator(
         lr:           Learning rate
         total_steps:  Maximum training steps
         log_every:    Steps between metric snapshots
+        operation:    The arithmetic task to train on (addition, subtraction,
+                      multiplication, polynomial, division)
         d_model:      Transformer hidden dimension
         n_heads:      Number of attention heads
         d_ff:         Feed-forward hidden dimension
@@ -99,8 +103,9 @@ def train_generator(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Data
+    print(f"[train] Operation: {OPERATION_LABELS.get(operation, operation)}")
     train_loader, test_loader = get_dataloaders(
-        fraction=fraction, p=PRIME, batch_size=512, seed=seed
+        fraction=fraction, p=PRIME, operation=operation, batch_size=512, seed=seed
     )
 
     # Model
@@ -166,6 +171,7 @@ def train_generator(
                 payload = {
                     "step": step,
                     "total_steps": total_steps,
+                    "operation": operation,
                     "train_loss": round(float(loss.item()), 6),
                     "train_accuracy": round(train_acc, 4),
                     "test_accuracy": round(test_acc, 4),
@@ -185,6 +191,7 @@ def train_generator(
     yield {
         "step": step,
         "total_steps": total_steps,
+        "operation": operation,
         "train_loss": round(float(loss.item()), 6),
         "train_accuracy": round(train_acc, 4),
         "test_accuracy": round(test_acc, 4),
@@ -200,6 +207,7 @@ def train_single_run(
     weight_decay: float = 1.0,
     total_steps: int = 50000,
     log_every: int = 500,
+    operation: Operation = "addition",
     **kwargs,
 ) -> Dict[str, Any]:
     """
@@ -217,6 +225,7 @@ def train_single_run(
         weight_decay=weight_decay,
         total_steps=total_steps,
         log_every=log_every,
+        operation=operation,
         **kwargs,
     ):
         last_payload = payload
@@ -230,15 +239,20 @@ def train_single_run(
 
 
 if __name__ == "__main__":
+    import sys
+    op = sys.argv[1] if len(sys.argv) > 1 else "addition"
+    steps = int(sys.argv[2]) if len(sys.argv) > 2 else 30000
+    
     print("=" * 60)
-    print("Running a quick training demo (5000 steps)...")
+    print(f"Training demo — Operation: {op} | Steps: {steps}")
     print("=" * 60)
 
     for snapshot in train_generator(
         fraction=0.4,
         weight_decay=1.0,
-        total_steps=5000,
+        total_steps=steps,
         log_every=500,
+        operation=op,
     ):
         step = snapshot["step"]
         tr = snapshot["train_accuracy"]

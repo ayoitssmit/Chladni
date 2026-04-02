@@ -15,27 +15,34 @@ import argparse
 import time
 import numpy as np
 from pathlib import Path
+from typing import Optional, List
 
 from train import train_single_run
+from dataset import Operation, OPERATION_LABELS
 
 
 def run_phase_diagram(
+    operation: Operation = "addition",
     n_fractions: int = 15,
     n_decays: int = 15,
     total_steps: int = 40000,
     log_every: int = 500,
-    output_path: str = "phase_diagram.json",
+    output_path: Optional[str] = None,
 ):
     """
     Execute a grid search over dataset fractions and weight decays.
 
     Args:
+        operation:   The arithmetic operation to test.
         n_fractions: Number of fraction values to test
         n_decays:    Number of weight decay values to test
         total_steps: Max steps per training run
         log_every:   Logging frequency
-        output_path: Where to save results
+        output_path: Where to save results (defaults to phase_diagram_<op>.json)
     """
+    if output_path is None:
+        output_path = f"phase_diagram_{operation}.json"
+
     # Define the hyperparameter grid
     fractions = np.linspace(0.1, 0.9, n_fractions).tolist()
     weight_decays = np.logspace(-2, 1, n_decays).tolist()  # 0.01 to 10.0 log-scale
@@ -44,7 +51,7 @@ def run_phase_diagram(
     results = []
 
     print("=" * 70)
-    print(f"PHASE DIAGRAM BATCH RUN")
+    print(f"PHASE DIAGRAM BATCH RUN — Operation: {OPERATION_LABELS.get(operation, operation)}")
     print(f"Grid: {n_fractions} fractions × {n_decays} weight_decays = {total_runs} runs")
     print(f"Max steps per run: {total_steps}")
     print("=" * 70)
@@ -58,6 +65,7 @@ def run_phase_diagram(
 
             try:
                 result = train_single_run(
+                    operation=operation,
                     fraction=frac,
                     weight_decay=wd,
                     total_steps=total_steps,
@@ -91,7 +99,7 @@ def run_phase_diagram(
                 })
 
             # Save intermediate results after each run
-            _save_results(results, fractions, weight_decays, output_path)
+            _save_results(results, fractions, weight_decays, output_path, operation)
 
     elapsed = time.time() - start_time
     print(f"\n{'=' * 70}")
@@ -102,10 +110,12 @@ def run_phase_diagram(
     return results
 
 
-def _save_results(results, fractions, weight_decays, output_path):
+def _save_results(results, fractions, weight_decays, output_path, operation):
     """Save current results to JSON."""
     output = {
         "metadata": {
+            "operation": operation,
+            "operation_label": OPERATION_LABELS.get(operation, operation),
             "prime": 97,
             "fractions": [round(f, 4) for f in fractions],
             "weight_decays": [round(w, 6) for w in weight_decays],
@@ -120,15 +130,17 @@ def _save_results(results, fractions, weight_decays, output_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate grokking phase diagram")
+    parser.add_argument("--operation", type=str, default="addition", help="Arithmetic task to test")
     parser.add_argument("--fractions", type=int, default=15, help="Number of fraction grid points")
     parser.add_argument("--decays", type=int, default=15, help="Number of weight_decay grid points")
     parser.add_argument("--steps", type=int, default=40000, help="Max training steps per run")
     parser.add_argument("--log-every", type=int, default=500, help="Logging frequency")
-    parser.add_argument("--output", type=str, default="phase_diagram.json", help="Output file path")
+    parser.add_argument("--output", type=str, default=None, help="Output file path")
 
     args = parser.parse_args()
 
     run_phase_diagram(
+        operation=args.operation,
         n_fractions=args.fractions,
         n_decays=args.decays,
         total_steps=args.steps,

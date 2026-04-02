@@ -18,6 +18,7 @@ from fastapi.responses import JSONResponse
 import uvicorn
 
 from train import train_generator
+from dataset import OPERATION_LABELS
 
 app = FastAPI(
     title="Grokking Simulation API",
@@ -63,13 +64,25 @@ async def get_phase_diagram():
     return data
 
 
+@app.get("/api/operations")
+async def get_operations():
+    """Return the list of supported arithmetic operations and their labels."""
+    return {
+        "operations": [
+            {"value": key, "label": label}
+            for key, label in OPERATION_LABELS.items()
+        ]
+    }
+
+
 @app.websocket("/ws/simulate")
 async def websocket_simulate(
     websocket: WebSocket,
     fraction: float = Query(0.5, ge=0.05, le=0.95),
     weight_decay: float = Query(1.0, ge=0.0, le=10.0),
-    total_steps: int = Query(50000, ge=1000, le=100000),
+    total_steps: int = Query(50000, ge=100, le=150000),
     lr: float = Query(1e-3, gt=0, le=0.1),
+    operation: str = Query("addition"),
 ):
     """
     WebSocket endpoint that streams training metrics in real-time.
@@ -77,16 +90,28 @@ async def websocket_simulate(
     Query parameters:
       - fraction:     Dataset fraction for training (0.05 - 0.95)
       - weight_decay: L2 regularization (0.0 - 10.0)
-      - total_steps:  Max training steps (1000 - 100000)
+      - total_steps:  Max training steps (1000 - 150000)
       - lr:           Learning rate
+      - operation:    Arithmetic task (addition, subtraction, multiplication,
+                      polynomial, division)
 
     The server sends a JSON message every ~100 steps containing:
-      { step, total_steps, train_loss, train_accuracy, test_accuracy,
+      { step, total_steps, operation, train_loss, train_accuracy, test_accuracy,
         pca_embeddings, grokked, elapsed_seconds }
     """
     await websocket.accept()
-    print(f"[ws] Client connected: fraction={fraction}, wd={weight_decay}, "
-          f"steps={total_steps}, lr={lr}")
+
+    # Validate operation
+    if operation not in OPERATION_LABELS:
+        await websocket.send_json({
+            "error": f"Unknown operation '{operation}'. "
+                     f"Choose from: {list(OPERATION_LABELS.keys())}"
+        })
+        await websocket.close()
+        return
+
+    print(f"[ws] Client connected: op={operation}, fraction={fraction}, "
+          f"wd={weight_decay}, steps={total_steps}, lr={lr}")
 
     try:
         # Run training in a thread to avoid blocking the event loop
@@ -96,6 +121,7 @@ async def websocket_simulate(
             lr=lr,
             total_steps=total_steps,
             log_every=100,
+            operation=operation,
         )
 
         for payload in generator:
