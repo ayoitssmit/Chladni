@@ -35,7 +35,7 @@ export default function ControlPanel({
   };
 
   return (
-    <div className="glass-panel p-5 flex flex-col gap-5 h-full">
+    <div className="glass-panel p-5 flex flex-col gap-5 h-full overflow-y-auto accent-scrollbar">
       {/* Header */}
       <div>
         <h2

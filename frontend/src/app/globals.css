@@ -55,6 +55,21 @@ body {
   border-radius: 3px;
 }
 
+/* ─── Accent Scrollbar ─── */
+.accent-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.accent-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.accent-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(212, 160, 84, 0.2);
+  border-radius: 10px;
+}
+.accent-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
 /* ─── Glass panels ─── */
 .glass-panel {
   background: var(--surface-800);
@@ -126,3 +141,16 @@ body {
     grid-template-rows: auto !important;
   }
 }
+
+/* ─── Hide number input spinners ─── */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  appearance: none;
+  -moz-appearance: textfield;
+}
+

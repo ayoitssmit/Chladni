@@ -58,21 +58,6 @@ export default function Home() {
             </span>
           </h1>
         </div>
-        <a
-          href="https://github.com/ayoitssmit/Chladni"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs transition-colors"
-          style={{ color: "var(--text-muted)" }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.color = "var(--accent-primary)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color = "var(--text-muted)")
-          }
-        >
-          GitHub
-        </a>
       </header>
 
       {/* ─── Main Dashboard Grid ─── */}
