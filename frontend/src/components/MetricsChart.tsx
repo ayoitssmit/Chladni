@@ -23,20 +23,18 @@ export default function MetricsChart({
   grokked,
   grokStep,
 }: MetricsChartProps) {
-  // Transform data for Recharts
   const chartData = metrics.map((m) => ({
     step: m.step,
     train: +(m.trainAccuracy * 100).toFixed(1),
     test: +(m.testAccuracy * 100).toFixed(1),
-    loss: m.trainLoss,
   }));
 
   const isEmpty = chartData.length === 0;
 
   return (
-    <div className="glass-panel p-4 flex flex-col h-full">
+    <div className="glass-panel p-4 flex flex-col h-full overflow-hidden relative">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2 shrink-0">
         <div>
           <h3
             className="text-sm font-semibold tracking-wider uppercase"
@@ -50,7 +48,7 @@ export default function MetricsChart({
         </div>
         {grokked && (
           <div
-            className="grok-indicator px-3 py-1 rounded-full text-xs font-bold"
+            className="grok-indicator px-3 py-1 rounded-full text-xs font-bold shrink-0"
             style={{
               background: "rgba(110, 224, 94, 0.15)",
               color: "var(--signal-grok)",
@@ -62,8 +60,8 @@ export default function MetricsChart({
         )}
       </div>
 
-      {/* Chart Container */}
-      <div className="flex-1 min-h-0 relative w-full">
+      {/* Chart */}
+      <div className="flex-1 relative" style={{ minHeight: 150 }}>
         {isEmpty ? (
           <div
             className="absolute inset-0 flex items-center justify-center text-sm"
@@ -72,10 +70,11 @@ export default function MetricsChart({
             Start a simulation to see the accuracy curves.
           </div>
         ) : (
-          <ResponsiveContainer width="99%" height="99%">
-            <LineChart
+          <div className="absolute inset-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
               data={chartData}
-              margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+              margin={{ top: 5, right: 15, left: 0, bottom: 35 }}
             >
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -117,35 +116,38 @@ export default function MetricsChart({
                 />
               )}
               <Line
-                type="monotone"
+                type="linear"
                 dataKey="train"
                 stroke="var(--signal-train)"
                 strokeWidth={2}
                 dot={false}
                 name="train"
+                isAnimationActive={false}
               />
               <Line
-                type="monotone"
+                type="linear"
                 dataKey="test"
                 stroke="var(--signal-test)"
                 strokeWidth={2}
                 dot={false}
                 name="test"
+                isAnimationActive={false}
               />
             </LineChart>
-          </ResponsiveContainer>
+            </ResponsiveContainer>
+          </div>
         )}
       </div>
 
       {/* Legend */}
-      <div className="flex gap-5 mt-2 justify-center">
+      <div className="flex gap-5 mt-1 justify-center shrink-0">
         <div className="flex items-center gap-1.5">
           <div
             className="w-3 h-0.5 rounded-full"
             style={{ background: "var(--signal-train)" }}
           />
           <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-            Train Accuracy
+            Train
           </span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -154,7 +156,7 @@ export default function MetricsChart({
             style={{ background: "var(--signal-test)" }}
           />
           <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-            Test Accuracy
+            Test
           </span>
         </div>
       </div>

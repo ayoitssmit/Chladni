@@ -25,4 +25,4 @@ dist-ssr/
 *.swo
 
 # Project specific
-backend/phase_diagram.json
+backend/phase_diagram*.json

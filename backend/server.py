@@ -49,16 +49,20 @@ async def health_check():
 async def get_phase_diagram():
     """
     Serve the pre-computed phase diagram data.
-    Returns a 2D grid of grokking onset steps for
-    (dataset_fraction, weight_decay) combinations.
     """
-    if not PHASE_DIAGRAM_PATH.exists():
+    # Search for any phase diagram JSON files in the current directory
+    json_files = list(Path(__file__).parent.glob("phase_diagram*.json"))
+    
+    if not json_files:
         return JSONResponse(
             status_code=404,
-            content={"error": "Phase diagram not yet computed. Run batch_run.py first."},
+            content={"error": "No phase diagram data found. Run batch_run.py first."},
         )
 
-    with open(PHASE_DIAGRAM_PATH, "r") as f:
+    # Use the most recently modified one
+    latest_file = max(json_files, key=lambda p: p.stat().st_mtime)
+    
+    with open(latest_file, "r") as f:
         data = json.load(f)
 
     return data
