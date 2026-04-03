@@ -119,14 +119,9 @@ body {
   box-shadow: 0 0 8px rgba(212, 160, 84, 0.4);
 }
 
-/* ─── Grokking pulse animation ─── */
-@keyframes grok-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.05); }
-}
-
 .grok-indicator {
-  animation: grok-pulse 1.5s ease-in-out infinite;
+  display: inline-flex;
+  align-items: center;
 }
 
 /* ─── Canvas container ─── */
