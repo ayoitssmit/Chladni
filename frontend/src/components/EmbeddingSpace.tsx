@@ -73,19 +73,16 @@ function EmbeddingPoints({ embeddings }: EmbeddingPointsProps) {
     if (lineGeometryRef.current) {
       const positions = lineGeometryRef.current.attributes.position.array as Float32Array;
       
-      // Get indices sorted by polar angle to draw a clean perimeter
-      const sortedByAngle = current.current
-        .map((pos, idx) => ({ idx, angle: Math.atan2(pos.y, pos.x) }))
-        .sort((a, b) => a.angle - b.angle);
-
+      // Connect tokens in sequential order (0 -> 1 -> 2 ... -> 96 -> 0)
+      // This accurately visualizes the harmonic star-polygons learned by the model
       for (let i = 0; i < 97; i++) {
-        const point = current.current[sortedByAngle[i].idx];
+        const point = current.current[i];
         positions[i * 3] = point.x;
         positions[i * 3 + 1] = point.y;
         positions[i * 3 + 2] = point.z;
       }
       // Close the loop
-      const firstPoint = current.current[sortedByAngle[0].idx];
+      const firstPoint = current.current[0];
       positions[97 * 3] = firstPoint.x;
       positions[97 * 3 + 1] = firstPoint.y;
       positions[97 * 3 + 2] = firstPoint.z;
@@ -130,7 +127,7 @@ function EmbeddingPoints({ embeddings }: EmbeddingPointsProps) {
           />
         </bufferGeometry>
         <lineBasicMaterial
-          color="var(--accent-secondary)"
+          color="#e8c47a"
           transparent
           opacity={0.35}
           linewidth={1.5}
