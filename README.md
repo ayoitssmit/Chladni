@@ -21,8 +21,8 @@ The frontend is a React application built with Next.js 15, TypeScript, and Tailw
 
 *   **Simulation Controls**: Adjust dynamic hyperparameters such as Dataset Fraction (which drives generalization) and Weight Decay (which provides the structural pressure needed for grokking).
 *   **Accuracy Curves**: Real-time line charts tracking the decoupling of training and test accuracy using Recharts.
-*   **Token Embedding Space**: A live 3D scatter plot powered by Three.js. As the model trains, it visualizes the geometric structures formed within the embeddings. Includes geometric angular sorting to cleanly render the complex Fourier-basis harmonic structures (rings/toruses) that emerge during mathematical generalization.
-*   **Phase Diagram**: A heatmap visualization that aggregates batch-run data, displaying the Grokking boundary across grid searches of dataset sizes and weight decays.
+*   **Token Embedding Space**: A live 3D scatter plot powered by Three.js. As the model trains, it visualizes the geometric structures formed within the embeddings across different modular operations, dynamically projecting onto an L2-normalized sphere to prevent magnitude collapse. Includes geometric angular sorting to cleanly render the complex Fourier-basis harmonic structures (rings/toruses) that emerge during mathematical generalization.
+*   **Early Warning System**: A live mathematical monitor running alongside training. It continuously computes the discrete Fourier transform of the embeddings to measure feature emergence and uses a Logit-transformed regression model applied to the testing accuracy's Sigmoid S-curve to algorithmically predict exactly which step grokking will occur.
 
 ## Installation
 
@@ -71,15 +71,7 @@ The platform requires both the backend API and the frontend client to be running
     ```
     The dashboard will be available at `http://localhost:3000`.
 
-### Generating Phase Diagram Data
 
-To populate the Phase Diagram heatmap, you must execute a batch grid search covering cross-sections of hyperparameters.
-
-```bash
-cd backend
-python batch_run.py --operation addition --fractions 15 --decays 15 --steps 40000
-```
-This script evaluates the grid and automatically saves intermediate results to `phase_diagram_addition.json`, which the frontend will dynamically parse and render.
 
 ## License
 
