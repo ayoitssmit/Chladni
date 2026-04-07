@@ -35,37 +35,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Path to pre-computed phase diagram data
-PHASE_DIAGRAM_PATH = Path(__file__).parent / "phase_diagram.json"
-
-
 @app.get("/")
 async def health_check():
     """Simple health check endpoint."""
     return {"status": "ok", "service": "grokking-simulation-api"}
-
-
-@app.get("/api/phase_diagram")
-async def get_phase_diagram():
-    """
-    Serve the pre-computed phase diagram data.
-    """
-    # Search for any phase diagram JSON files in the current directory
-    json_files = list(Path(__file__).parent.glob("phase_diagram*.json"))
-    
-    if not json_files:
-        return JSONResponse(
-            status_code=404,
-            content={"error": "No phase diagram data found. Run batch_run.py first."},
-        )
-
-    # Use the most recently modified one
-    latest_file = max(json_files, key=lambda p: p.stat().st_mtime)
-    
-    with open(latest_file, "r") as f:
-        data = json.load(f)
-
-    return data
 
 
 @app.get("/api/operations")
@@ -117,6 +90,9 @@ async def websocket_simulate(
     print(f"[ws] Client connected: op={operation}, fraction={fraction}, "
           f"wd={weight_decay}, steps={total_steps}, lr={lr}")
 
+    last_payload = None
+    grok_step = -1
+    
     try:
         # Run training in a thread to avoid blocking the event loop
         generator = train_generator(
@@ -129,6 +105,10 @@ async def websocket_simulate(
         )
 
         for payload in generator:
+            last_payload = payload
+            if payload.get("grokked") and grok_step == -1:
+                grok_step = payload.get("step", -1)
+
             # Send the snapshot as JSON
             await websocket.send_json(payload)
 
@@ -160,6 +140,7 @@ async def websocket_simulate(
             await websocket.send_json({"error": str(e)})
         except Exception:
             pass
+        pass
 
 
 if __name__ == "__main__":
