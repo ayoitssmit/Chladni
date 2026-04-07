@@ -104,6 +104,8 @@ export default function Home() {
           elapsedSeconds={latestElapsed}
           operation={latestOperation}
           error={stream.error}
+          predictedGrokStep={stream.predictedGrokStep}
+          fftSignal={stream.fftSignal}
         />
       </div>
     </div>

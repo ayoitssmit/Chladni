@@ -23,6 +23,8 @@ export interface MetricSnapshot {
   elapsedSeconds: number;
   finished?: boolean;
   stopped?: boolean;
+  fftSignal?: number;
+  predictedGrokStep?: number;
 }
 
 export interface StreamState {
@@ -33,21 +35,27 @@ export interface StreamState {
   grokStep: number | null;
   currentStep: number;
   error: string | null;
+  predictedGrokStep: number | null;
+  fftSignal: number;
 }
 
 const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
 
+const INITIAL_STATE: StreamState = {
+  isRunning: false,
+  metrics: [],
+  latestEmbeddings: [],
+  grokked: false,
+  grokStep: null,
+  currentStep: 0,
+  error: null,
+  predictedGrokStep: null,
+  fftSignal: 0,
+};
+
 /* ─── Hook ─── */
 export function useGrokkingStream() {
-  const [state, setState] = useState<StreamState>({
-    isRunning: false,
-    metrics: [],
-    latestEmbeddings: [],
-    grokked: false,
-    grokStep: null,
-    currentStep: 0,
-    error: null,
-  });
+  const [state, setState] = useState<StreamState>({ ...INITIAL_STATE });
 
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -58,15 +66,7 @@ export function useGrokkingStream() {
     }
 
     // Reset state
-    setState({
-      isRunning: true,
-      metrics: [],
-      latestEmbeddings: [],
-      grokked: false,
-      grokStep: null,
-      currentStep: 0,
-      error: null,
-    });
+    setState({ ...INITIAL_STATE, isRunning: true });
 
     // Build WebSocket URL with query params
     const queryStr = new URLSearchParams({
@@ -118,6 +118,8 @@ export function useGrokkingStream() {
           grokked: raw.grokked,
           elapsedSeconds: raw.elapsed_seconds,
           finished: raw.finished,
+          fftSignal: raw.fft_signal ?? 0,
+          predictedGrokStep: raw.predicted_grok_step ?? -1,
         };
 
         setState((prev) => {
@@ -133,6 +135,11 @@ export function useGrokkingStream() {
                 : prev.grokStep,
             currentStep: snapshot.step,
             isRunning: !snapshot.finished,
+            predictedGrokStep:
+              snapshot.predictedGrokStep && snapshot.predictedGrokStep > 0
+                ? snapshot.predictedGrokStep
+                : prev.predictedGrokStep,
+            fftSignal: snapshot.fftSignal ?? prev.fftSignal,
           };
         });
       } catch (err) {
@@ -165,15 +172,7 @@ export function useGrokkingStream() {
     if (wsRef.current) {
       wsRef.current.close();
     }
-    setState({
-      isRunning: false,
-      metrics: [],
-      latestEmbeddings: [],
-      grokked: false,
-      grokStep: null,
-      currentStep: 0,
-      error: null,
-    });
+    setState({ ...INITIAL_STATE });
   }, []);
 
   return { ...state, start, stop, reset };
