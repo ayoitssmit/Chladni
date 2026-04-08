@@ -16,6 +16,9 @@ interface ControlPanelProps {
   onStart: (params: SimulationParams) => void;
   onStop: () => void;
   onReset: () => void;
+  onIntervene: () => void;
+  interventionTriggered: boolean;
+  grokked: boolean;
 }
 
 export default function ControlPanel({
@@ -23,6 +26,9 @@ export default function ControlPanel({
   onStart,
   onStop,
   onReset,
+  onIntervene,
+  interventionTriggered,
+  grokked,
 }: ControlPanelProps) {
   const [operation, setOperation] = useState("addition");
   const [fraction, setFraction] = useState(0.4);
@@ -194,6 +200,24 @@ export default function ControlPanel({
               border: "1px solid var(--border-subtle)",
             }}
           />
+        </div>
+
+        {/* Adaptive Intervention Toggle */}
+        <div className="flex flex-col gap-1.5 mt-2 p-3 rounded-lg border border-[#eab308]/20 bg-[#eab308]/5">
+          <button
+            onClick={onIntervene}
+            disabled={!isRunning || interventionTriggered || grokked}
+            className="w-full py-2 rounded-lg text-sm font-semibold tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              background: interventionTriggered ? "rgba(234, 179, 8, 0.2)" : "#eab308",
+              color: interventionTriggered ? "#eab308" : "#fff",
+            }}
+          >
+            {interventionTriggered ? "Intervention Active" : "Trigger EWS Intervention"}
+          </button>
+          <p className="text-[10px] opacity-80" style={{ color: "var(--text-secondary)", textAlign: "center" }}>
+            Instantly applies a 5x spike to weight decay to force early grokking.
+          </p>
         </div>
       </div>
 

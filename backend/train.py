@@ -76,6 +76,7 @@ def train_generator(
     d_ff: int = 200,
     n_layers: int = 1,
     seed: int = 42,
+    shared_state: Dict[str, bool] = None,
 ) -> Generator[Dict[str, Any], None, None]:
     """
     Generator that yields training metrics at regular intervals.
@@ -146,6 +147,10 @@ def train_generator(
     best_test_acc = 0.0
     test_acc_history = []
     locked_prediction = -1
+    intervention_triggered = False
+    
+    if shared_state is None:
+        shared_state = {"intervene": False}
 
     while step < total_steps:
         for x, y in train_loader:
@@ -159,6 +164,13 @@ def train_generator(
             loss = criterion(logits, y)
             loss.backward()
             optimizer.step()
+            
+            # Apply manual intervention if requested via shared_state
+            if shared_state.get("intervene", False) and not intervention_triggered:
+                intervention_triggered = True
+                for param_group in optimizer.param_groups:
+                    param_group['weight_decay'] *= 5.0
+                print(f"[intervention] Weight decay sharply increased to {weight_decay * 5.0} at step {step}!")
 
             step += 1
 
@@ -248,6 +260,7 @@ def train_generator(
                     "elapsed_seconds": round(elapsed, 2),
                     "fft_signal": round(fft_signal * 100, 2),  # 0-100%
                     "predicted_grok_step": predicted_grok_step,
+                    "intervention_triggered": intervention_triggered,
                 }
 
                 yield payload
@@ -270,6 +283,7 @@ def train_generator(
         "elapsed_seconds": round(time.time() - start_time, 2),
         "fft_signal": round(fft_signal * 100, 2) if 'fft_signal' in locals() else 0.0,
         "predicted_grok_step": -1,
+        "intervention_triggered": intervention_triggered,
         "finished": True,
     }
 

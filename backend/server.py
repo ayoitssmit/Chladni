@@ -92,6 +92,7 @@ async def websocket_simulate(
 
     last_payload = None
     grok_step = -1
+    shared_state = {"intervene": False}
     
     try:
         # Run training in a thread to avoid blocking the event loop
@@ -102,6 +103,7 @@ async def websocket_simulate(
             total_steps=total_steps,
             log_every=100,
             operation=operation,
+            shared_state=shared_state,
         )
 
         for payload in generator:
@@ -127,6 +129,9 @@ async def websocket_simulate(
                         "step": payload["step"],
                     })
                     break
+                elif msg == "intervene":
+                    print(f"[ws] Client triggered early EWS intervention")
+                    shared_state["intervene"] = True
             except asyncio.TimeoutError:
                 pass  # No message from client, continue training
 

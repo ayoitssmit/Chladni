@@ -11,6 +11,7 @@ interface StatusBarProps {
   error: string | null;
   predictedGrokStep?: number | null;
   fftSignal?: number;
+  interventionTriggered?: boolean;
 }
 
 const OPERATION_LABELS: Record<string, string> = {
@@ -32,6 +33,7 @@ export default function StatusBar({
   error,
   predictedGrokStep,
   fftSignal = 0,
+  interventionTriggered = false,
 }: StatusBarProps) {
   const progress =
     totalSteps > 0 ? Math.min((currentStep / totalSteps) * 100, 100) : 0;
@@ -139,6 +141,21 @@ export default function StatusBar({
           }}
         >
           Grokking predicted in ~{stepsUntilPredicted.toLocaleString()} steps
+        </span>
+      )}
+
+      {/* Intervention pill */}
+      {interventionTriggered && (
+        <span
+          className="text-xs font-bold px-2.5 py-0.5 rounded-full"
+          style={{
+            background: "rgba(234, 179, 8, 0.15)",
+            color: "#eab308",
+            border: "1px solid rgba(234, 179, 8, 0.5)",
+            boxShadow: "0 0 8px rgba(234, 179, 8, 0.3)",
+          }}
+        >
+          INTERVENTION TRIGGERED
         </span>
       )}
 

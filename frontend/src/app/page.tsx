@@ -73,6 +73,9 @@ export default function Home() {
               onStart={stream.start}
               onStop={stream.stop}
               onReset={stream.reset}
+              onIntervene={stream.intervene}
+              interventionTriggered={stream.interventionTriggered}
+              grokked={stream.grokked}
             />
           </div>
 
@@ -113,6 +116,7 @@ export default function Home() {
           error={stream.error}
           predictedGrokStep={stream.predictedGrokStep}
           fftSignal={stream.fftSignal}
+          interventionTriggered={stream.interventionTriggered}
         />
       </div>
 

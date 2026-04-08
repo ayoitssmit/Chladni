@@ -25,6 +25,7 @@ export interface MetricSnapshot {
   stopped?: boolean;
   fftSignal?: number;
   predictedGrokStep?: number;
+  interventionTriggered?: boolean;
 }
 
 export interface StreamState {
@@ -37,6 +38,7 @@ export interface StreamState {
   error: string | null;
   predictedGrokStep: number | null;
   fftSignal: number;
+  interventionTriggered: boolean;
 }
 
 const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
@@ -51,6 +53,7 @@ const INITIAL_STATE: StreamState = {
   error: null,
   predictedGrokStep: null,
   fftSignal: 0,
+  interventionTriggered: false,
 };
 
 /* ─── Hook ─── */
@@ -120,6 +123,7 @@ export function useGrokkingStream() {
           finished: raw.finished,
           fftSignal: raw.fft_signal ?? 0,
           predictedGrokStep: raw.predicted_grok_step ?? -1,
+          interventionTriggered: raw.intervention_triggered ?? false,
         };
 
         setState((prev) => {
@@ -140,6 +144,7 @@ export function useGrokkingStream() {
                 ? snapshot.predictedGrokStep
                 : prev.predictedGrokStep,
             fftSignal: snapshot.fftSignal ?? prev.fftSignal,
+            interventionTriggered: snapshot.interventionTriggered || prev.interventionTriggered,
           };
         });
       } catch (err) {
@@ -175,5 +180,12 @@ export function useGrokkingStream() {
     setState({ ...INITIAL_STATE });
   }, []);
 
-  return { ...state, start, stop, reset };
+  const intervene = useCallback(() => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send("intervene");
+      setState((prev) => ({ ...prev, interventionTriggered: true }));
+    }
+  }, []);
+
+  return { ...state, start, stop, reset, intervene };
 }
