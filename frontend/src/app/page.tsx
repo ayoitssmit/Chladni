@@ -5,10 +5,12 @@ import ControlPanel from "@/components/ControlPanel";
 import MetricsChart from "@/components/MetricsChart";
 import EmbeddingSpace from "@/components/EmbeddingSpace";
 import StatusBar from "@/components/StatusBar";
-import React from "react";
+import { EmbeddingVisualizer } from "@/components/EmbeddingVisualizer";
+import React, { useState } from "react";
 
 export default function Home() {
   const stream = useGrokkingStream();
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const latestOperation =
     stream.metrics.length > 0
@@ -26,7 +28,7 @@ export default function Home() {
       : 50000;
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-screen flex flex-col overflow-hidden relative">
       {/* ─── Top Bar ─── */}
       <header
         className="flex items-center justify-between px-5 py-3 shrink-0"
@@ -79,6 +81,11 @@ export default function Home() {
             <EmbeddingSpace
               embeddings={stream.latestEmbeddings}
               grokked={stream.grokked}
+              isFullscreen={isFullscreen}
+              onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+              currentStep={stream.currentStep}
+              totalSteps={totalSteps}
+              isRunning={stream.isRunning}
             />
           </div>
 
@@ -108,6 +115,8 @@ export default function Home() {
           fftSignal={stream.fftSignal}
         />
       </div>
+
+
     </div>
   );
 }
